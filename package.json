@@ -1,0 +1,23 @@
+{
+  "name": "zwijsen-nakijk-flow",
+  "version": "1.0.0",
+  "description": "Nakijkondersteuning met Azure Blob Storage, Document Intelligence en OpenAI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "azure",
+    "form-recognizer",
+    "openai",
+    "nakijken",
+    "onderwijs"
+  ],
+  "author": "Zwijsen",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/storage-blob": "^12.27.0",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0"
+  }
+}
