@@ -26,12 +26,15 @@ Voor elk onderdeel geef je:
 
 Gebruik voor elk onderdeel een JSON-object met exact deze structuur:
 {
+  "leerling": "..."              // naam van de leerling. Vermeld de naam van de leerling eenmalig bovenaan de JSON.
+}
+
+{
   "onderdeel": "...",           // de naam van het onderdeel (bijv. "Prijs voor kaas")
   "antwoord": "...",            // het antwoord dat de leerling gaf
   "correct": true of false,      // is het correct beoordeeld?
   "opmerking": "...",           // optioneel, alleen invullen bij fouten
   "confidence": 0% - 100%        // gebruik de confidence score die vanuit de JSON-bestand komt
-  "leerling": "..."              // naam van de leerling
 }
 
 Als een correct antwoord beschikbaar is, gebruik dit ter vergelijking.`.trim()
