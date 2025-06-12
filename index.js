@@ -15,6 +15,15 @@ function extractStudentName(fields) {
   return '';
 }
 
+function extractLocation(field) {
+  const region = field?.boundingRegions?.[0];
+  if (!region) return null;
+  return {
+    page: region.pageNumber,
+    polygon: region.polygon || region.boundingPolygon || null
+  };
+}
+
 (async () => {
   const blobs = await listNewScans();
 
@@ -49,6 +58,7 @@ function extractStudentName(fields) {
               vraag: `${veld} voor ${product}`,
               antwoord: row[veld].content,
               correctAntwoord: correctModel?.[`${veld} voor ${product}`] || null,
+              locatie: extractLocation(row[veld]),
               confidence: row[veld].confidence || 1
             });
           }
@@ -63,6 +73,7 @@ function extractStudentName(fields) {
         vraag,
         antwoord: docFields['Totaal snelverkoop'].content,
         correctAntwoord: correctModel?.[vraag] || null,
+        locatie: extractLocation(docFields['Totaal snelverkoop']),
         confidence: docFields['Totaal snelverkoop'].confidence || 1
       });
     }
@@ -86,6 +97,7 @@ function extractStudentName(fields) {
               vraag,
               antwoord: inhoud.content,
               correctAntwoord: correctModel?.[vraag] || null,
+              locatie: extractLocation(inhoud),
               confidence: inhoud.confidence || 1
             });
           }
@@ -103,6 +115,7 @@ function extractStudentName(fields) {
           vraag,
           antwoord: aangekruist ? 'aangekruist' : 'niet aangekruist',
           correctAntwoord: correctModel?.[vraag] || null,
+          locatie: extractLocation(kruis),
           confidence: kruis.confidence || 1
         });
       }
@@ -114,7 +127,16 @@ function extractStudentName(fields) {
     }
 
     const beoordeling = await evaluateAnswers(qaPairs, studentName);
-    await save(blobName, beoordeling);
+
+    // Voeg locatie en correcte antwoord toe aan de evaluatie
+    beoordeling.forEach((item, idx) => {
+      if (idx === 0) return; // eerste item bevat enkel leerlingnaam
+      const qa = qaPairs[idx - 1];
+      item.locatie = qa.locatie;
+      item.correctAntwoord = qa.correctAntwoord;
+    });
+
+    await save(blobName, JSON.stringify(beoordeling, null, 2));
     console.log(`✔ Beoordeling opgeslagen voor ${blobName}`);
   }
 })();
