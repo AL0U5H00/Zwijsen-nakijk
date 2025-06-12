@@ -7,6 +7,14 @@ const save = require('./functions/saveEvaluationResult');
 const getCorrectAnswers = require('./functions/getCorrectAnswers');
 const saveFRresult = require('./functions/saveFRresult');
 
+function extractStudentName(fields) {
+  const opties = ['Leerling', 'Naam', 'Naam leerling', 'Leerlingnaam'];
+  for (const key of opties) {
+    if (fields[key]?.content) return fields[key].content;
+  }
+  return '';
+}
+
 (async () => {
   const blobs = await listNewScans();
 
@@ -18,6 +26,7 @@ const saveFRresult = require('./functions/saveFRresult');
     const correctModel = await getCorrectAnswers();
 
     const docFields = result.analyzeResult.documents[0].fields;
+    const studentName = extractStudentName(docFields);
     const qaPairs = [];
 
     // 1. Snelverkoop tabel
@@ -104,7 +113,7 @@ const saveFRresult = require('./functions/saveFRresult');
       continue;
     }
 
-    const beoordeling = await evaluateAnswers(qaPairs);
+    const beoordeling = await evaluateAnswers(qaPairs, studentName);
     await save(blobName, beoordeling);
     console.log(`✔ Beoordeling opgeslagen voor ${blobName}`);
   }
