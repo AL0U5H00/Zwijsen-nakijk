@@ -3,7 +3,9 @@ const { default: axios } = require('axios');
 module.exports = async function evaluateAnswers(qaPairs) {
   if (!Array.isArray(qaPairs)) throw new Error("qaPairs is geen array");
 
-  const leerlingInput = qaPairs.map((qa, i) => `${i + 1}. Onderdeel: ${qa.vraag} Antwoord: ${qa.antwoord}`).join('\n');
+  const leerlingInput = qaPairs.map((qa, i) => {
+    return `${i + 1}. Onderdeel: ${qa.vraag}\nLeerling: ${qa.antwoord}\nCorrect: ${qa.correctAntwoord || 'n.v.t.'}`;
+  }).join('\n');
 
   const prompt = [
     {
@@ -28,12 +30,10 @@ Gebruik voor elk onderdeel een JSON-object met exact deze structuur:
   "antwoord": "...",            // het antwoord dat de leerling gaf
   "correct": true of false,      // is het correct beoordeeld?
   "opmerking": "...",           // optioneel, alleen invullen bij fouten
-  "confidence": 0.0 - 1.0        // getal tussen 0 (twijfel) en 1 (zeer zeker)
+  "confidence": 0% - 100%        // gebruik de confidence score die vanuit de JSON-bestand komt
 }
 
-Let op:
-- Geef geen uitleg voor de leerling, alleen voor de docent
-- Beoordeel alleen echte antwoorden; kopregels of lege velden hoef je niet mee te nemen`.trim()
+Als een correct antwoord beschikbaar is, gebruik dit ter vergelijking.`.trim()
     },
     {
       role: 'user',

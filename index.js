@@ -4,6 +4,8 @@ const analyze = require('./functions/analyzeWithFormRecognizer');
 const poll = require('./functions/pollAnalysisResult');
 const evaluateAnswers = require('./functions/evaluateWithOpenAI');
 const save = require('./functions/saveEvaluationResult');
+const getCorrectAnswers = require('./functions/getCorrectAnswers');
+const saveFRresult = require('./functions/saveFRresult');
 
 (async () => {
   const blobs = await listNewScans();
@@ -11,6 +13,9 @@ const save = require('./functions/saveEvaluationResult');
   for (const blobName of blobs) {
     const operationLocation = await analyze(blobName);
     const result = await poll(operationLocation);
+    await saveFRresult(blobName, result);
+
+    const correctModel = await getCorrectAnswers();
 
     const docFields = result.analyzeResult.documents[0].fields;
     const qaPairs = [];
@@ -34,6 +39,7 @@ const save = require('./functions/saveEvaluationResult');
             qaPairs.push({
               vraag: `${veld} voor ${product}`,
               antwoord: row[veld].content,
+              correctAntwoord: correctModel?.[`${veld} voor ${product}`] || null,
               confidence: row[veld].confidence || 1
             });
           }
@@ -43,9 +49,11 @@ const save = require('./functions/saveEvaluationResult');
 
     // 2. Totaal korting
     if (docFields['Totaal snelverkoop']?.content) {
+      const vraag = 'Wat is het totaalbedrag aan korting?';
       qaPairs.push({
-        vraag: 'Wat is het totaalbedrag aan korting?',
+        vraag,
         antwoord: docFields['Totaal snelverkoop'].content,
+        correctAntwoord: correctModel?.[vraag] || null,
         confidence: docFields['Totaal snelverkoop'].confidence || 1
       });
     }
@@ -56,11 +64,19 @@ const save = require('./functions/saveEvaluationResult');
         const row = rij?.valueObject;
         if (!row) return;
 
+        const skipRow = Object.values(row).some(cell =>
+          ['infinitief', 'tegenwoordige tijd', 'verleden tijd', 'voltooid deelwoord']
+            .includes(cell?.content?.toLowerCase())
+        );
+        if (skipRow) return;
+
         Object.entries(row).forEach(([vorm, inhoud]) => {
           if (inhoud?.content) {
+            const vraag = `Werkwoord rij ${index + 1} - ${vorm}`;
             qaPairs.push({
-              vraag: `Werkwoord rij ${index + 1} - ${vorm}`,
+              vraag,
               antwoord: inhoud.content,
+              correctAntwoord: correctModel?.[vraag] || null,
               confidence: inhoud.confidence || 1
             });
           }
@@ -73,9 +89,11 @@ const save = require('./functions/saveEvaluationResult');
       const kruis = docFields[veld];
       if (kruis) {
         const aangekruist = kruis.valueType === 'selectionMark' && kruis.content === 'selected';
+        const vraag = `Meerkeuzeoptie ${index + 1}`;
         qaPairs.push({
-          vraag: `Meerkeuzeoptie ${index + 1}`,
+          vraag,
           antwoord: aangekruist ? 'aangekruist' : 'niet aangekruist',
+          correctAntwoord: correctModel?.[vraag] || null,
           confidence: kruis.confidence || 1
         });
       }
