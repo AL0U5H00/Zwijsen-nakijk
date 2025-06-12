@@ -28,7 +28,7 @@ Voor elk onderdeel geef je:
 - hoe zeker je bent van je beoordeling (confidence score)
 - hoe zeker je bent van je beoordeling (confidence score). Gebruik hiervoor de meegegeven FR-confidence en pas deze niet aan
 
-Geef ALLE resultaten terug als één geldig JSON-array. De eerste entry bevat enkel het veld \"leerling\" met de naam van de leerling. De daaropvolgende entries hebben exact dit formaat:
+Geef ALLE resultaten terug als één geldig JSON-array. De eerste entry bevat enkel het veld "leerling" met de naam van de leerling. De daaropvolgende entries hebben exact dit formaat:
 {
   "onderdeel": "...",
   "antwoord": "...",
