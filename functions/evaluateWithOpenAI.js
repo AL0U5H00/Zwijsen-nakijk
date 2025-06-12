@@ -1,11 +1,14 @@
 const { default: axios } = require('axios');
 
 module.exports = async function evaluateAnswers(qaPairs, studentName = '') {
-  if (!Array.isArray(qaPairs)) throw new Error("qaPairs is geen array");
+  if (!Array.isArray(qaPairs)) throw new Error('qaPairs is geen array');
 
-  const leerlingInput = qaPairs.map((qa, i) => {
-    return `${i + 1}. Onderdeel: ${qa.vraag}\nLeerling: ${qa.antwoord}\nCorrect: ${qa.correctAntwoord || 'n.v.t.'}`;
-  }).join('\n');
+  const leerlingInput = qaPairs
+    .map((qa, i) => {
+      const score = qa.confidence ?? 1;
+      return `${i + 1}. Onderdeel: ${qa.vraag}\nLeerling: ${qa.antwoord}\nCorrect: ${qa.correctAntwoord || 'n.v.t.'}\nFR-confidence: ${score}`;
+    })
+    .join('\n');
 
   const prompt = [
     {
@@ -23,18 +26,15 @@ Voor elk onderdeel geef je:
 - wat het gegeven antwoord was
 - indien fout: een korte opmerking wat er mis is (bijvoorbeeld fout vervoegd, bedrag niet correct berekend, of geen optie aangekruist)
 - hoe zeker je bent van je beoordeling (confidence score)
+- hoe zeker je bent van je beoordeling (confidence score). Gebruik hiervoor de meegegeven FR-confidence en pas deze niet aan
 
-Gebruik voor elk onderdeel een JSON-object met exact deze structuur:
+Geef ALLE resultaten terug als één geldig JSON-array. De eerste entry bevat enkel het veld \"leerling\" met de naam van de leerling. De daaropvolgende entries hebben exact dit formaat:
 {
-  "leerling": "..."              // naam van de leerling. Vermeld de naam van de leerling eenmalig bovenaan de JSON.
-}
-
-{
-  "onderdeel": "...",           // de naam van het onderdeel (bijv. "Prijs voor kaas")
-  "antwoord": "...",            // het antwoord dat de leerling gaf
-  "correct": true of false,      // is het correct beoordeeld?
-  "opmerking": "...",           // optioneel, alleen invullen bij fouten
-  "confidence": 0% - 100%        // gebruik de confidence score die vanuit de JSON-bestand komt
+  "onderdeel": "...",
+  "antwoord": "...",
+  "correct": true of false,
+  "opmerking": "...",
+  "confidence": 0-1            // exact dezelfde score als de FR-confidence
 }
 
 Als een correct antwoord beschikbaar is, gebruik dit ter vergelijking.`.trim()
@@ -59,5 +59,11 @@ Als een correct antwoord beschikbaar is, gebruik dit ter vergelijking.`.trim()
     }
   );
 
-  return response.data.choices[0].message.content;
+  const content = response.data.choices[0].message.content.trim();
+  try {
+    return JSON.parse(content);
+  } catch (err) {
+    console.error('Kon JSON van OpenAI niet parsen:', content);
+    throw err;
+  }
 };
