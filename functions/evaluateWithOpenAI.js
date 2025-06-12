@@ -1,6 +1,6 @@
 const { default: axios } = require('axios');
 
-module.exports = async function evaluateAnswers(qaPairs) {
+module.exports = async function evaluateAnswers(qaPairs, studentName = '') {
   if (!Array.isArray(qaPairs)) throw new Error("qaPairs is geen array");
 
   const leerlingInput = qaPairs.map((qa, i) => {
@@ -31,13 +31,14 @@ Gebruik voor elk onderdeel een JSON-object met exact deze structuur:
   "correct": true of false,      // is het correct beoordeeld?
   "opmerking": "...",           // optioneel, alleen invullen bij fouten
   "confidence": 0% - 100%        // gebruik de confidence score die vanuit de JSON-bestand komt
+  "leerling": "..."              // naam van de leerling
 }
 
 Als een correct antwoord beschikbaar is, gebruik dit ter vergelijking.`.trim()
     },
     {
       role: 'user',
-      content: `Vragen en antwoorden:\n${leerlingInput}`
+      content: `${studentName ? `Naam leerling: ${studentName}\n` : ''}Vragen en antwoorden:\n${leerlingInput}`
     }
   ];
 
