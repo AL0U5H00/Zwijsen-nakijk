@@ -5,7 +5,8 @@ module.exports = async function evaluateAnswers(qaPairs, studentName = '') {
 
   const leerlingInput = qaPairs
     .map((qa, i) => {
-      return `${i + 1}. Onderdeel: ${qa.vraag}\nLeerling: ${qa.antwoord}\nCorrect: ${qa.correctAntwoord || 'n.v.t.'}`;
+      const score = qa.confidence ?? 1;
+      return `${i + 1}. Onderdeel: ${qa.vraag}\nLeerling: ${qa.antwoord}\nCorrect: ${qa.correctAntwoord || 'n.v.t.'}\nFR-confidence: ${score}`;
     })
     .join('\n');
 
@@ -25,14 +26,15 @@ Voor elk onderdeel geef je:
 - wat het gegeven antwoord was
 - indien fout: een korte opmerking wat er mis is (bijvoorbeeld fout vervoegd, bedrag niet correct berekend, of geen optie aangekruist)
 - hoe zeker je bent van je beoordeling (confidence score)
+- hoe zeker je bent van je beoordeling (confidence score). Gebruik hiervoor de meegegeven FR-confidence en pas deze niet aan
 
-Geef ALLE resultaten terug als één geldig JSON-array. De eerste entry bevat enkel het veld \"leerling\" met de naam van de leerling. De daaropvolgende entries hebben exact dit formaat:
+Geef ALLE resultaten terug als één geldig JSON-array. De eerste entry bevat enkel het veld "leerling" met de naam van de leerling. De daaropvolgende entries hebben exact dit formaat:
 {
   "onderdeel": "...",
   "antwoord": "...",
   "correct": true of false,
   "opmerking": "...",
-  "confidence": 0-100
+  "confidence": 0-1            // exact dezelfde score als de FR-confidence
 }
 
 Als een correct antwoord beschikbaar is, gebruik dit ter vergelijking.`.trim()
