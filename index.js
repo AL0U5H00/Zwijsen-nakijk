@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { BlobServiceClient } = require('@azure/storage-blob');
 const listNewScans = require('./functions/triggerBlobUpload');
 const analyze = require('./functions/analyzeWithFormRecognizer');
 const poll = require('./functions/pollAnalysisResult');
@@ -24,10 +25,27 @@ function extractLocation(field) {
   };
 }
 
+const blobServiceClient = BlobServiceClient.fromConnectionString(
+  process.env.AZURE_STORAGE_CONNECTION_STRING
+);
+const resultsContainer = blobServiceClient.getContainerClient(
+  process.env.BLOB_CONTAINER_RESULTS
+);
+
+async function isAlreadyProcessed(blobName) {
+  const fileName = `beoordeling-${blobName.replace(/\.[^/.]+$/, '')}.json`;
+  const blobClient = resultsContainer.getBlobClient(fileName);
+  return await blobClient.exists();
+}
+
 (async () => {
   const blobs = await listNewScans();
 
   for (const blobName of blobs) {
+    if (await isAlreadyProcessed(blobName)) {
+      console.log(`⏭ ${blobName} is al verwerkt, overslaan.`);
+      continue;
+    }
     const operationLocation = await analyze(blobName);
     const result = await poll(operationLocation);
     await saveFRresult(blobName, result);
